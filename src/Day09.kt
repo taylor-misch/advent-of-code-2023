@@ -60,7 +60,17 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        return 0
+        val readings = parseReadings(input)
+        var result = 0;
+        for (reading in readings) {
+            val reversedReading = reading.reversed()
+            val lastNumber = findDifferences(reversedReading).last()
+            val nextNumber = reversedReading.last() + lastNumber
+            println("Next number: $nextNumber")
+            result += nextNumber
+        }
+        println("Result: $result")
+        return result
     }
 
     // test if implementation meets criteria from the description, like:

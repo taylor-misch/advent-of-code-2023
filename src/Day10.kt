@@ -96,6 +96,15 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
+        //Read path and record the farthest up, down, left, and right positions to make a square
+        //Save all Path positions in a set
+        //Walk the boundary and set any non-pipe positions to a "O"
+        //Continue moving inward until you reach the center
+        //Any non-pipe positions that are not touching an O are an "I"
+        //Count the number of I's
+        //Return Count
+
+
         return 0
     }
 

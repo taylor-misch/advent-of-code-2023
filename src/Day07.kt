@@ -112,12 +112,126 @@ fun main() {
         }
     }
 
-    fun sortHands(input: List<String>): List<Hand> {
+    fun sortHandsV1(input: List<String>): List<Hand> {
         val hands = input.map { parseHandV1(it) }
         for (hand in hands) {
             hand.type = determineType(hand)
         }
         return hands.sortedWith(::compareHands)
+    }
+
+    fun jokerReplacement(hand: Hand): Hand {
+        val jokerCount = hand.cardString.count { it == 'J' }
+//        println("Hand: ${hand.cardString} - $jokerCount jokers")
+        if(jokerCount == 0) {
+            return hand
+        }
+        when {
+            hand.type == 1 -> { // 5 of a kind
+                return hand
+            }
+
+            hand.type == 2 -> { // 4 of a kind
+                return when {
+                    jokerCount == 1 || jokerCount == 4 -> {
+                        hand.type = 1
+                        hand
+                    }
+                    else -> {
+                        println("Shouldn't get here (4 of a kind)")
+                        hand
+                    }
+                }
+            }
+
+            hand.type == 3 -> { // full house
+                return when {
+                    jokerCount == 2 || jokerCount == 3 -> {
+                        hand.type = 1
+                        hand
+                    }
+
+                    else -> {
+                        println("Shouldn't get here (full house)")
+                        hand
+                    }
+                }
+            }
+
+            hand.type == 4 -> { // 3 of a kind
+                return when {
+                    jokerCount == 1 || jokerCount == 3 -> {
+                        hand.type = 2
+                        hand
+                    }
+
+                    else -> {
+                        println("Shouldn't get here (3 of a kind)")
+                        hand
+                    }
+                }
+            }
+
+            hand.type == 5 -> { // 2 pairs
+                return when {
+                    jokerCount == 1 -> {
+                        hand.type = 3
+                        hand
+                    }
+
+                    jokerCount == 2 -> {
+                        hand.type = 2
+                        hand
+                    }
+
+                    else -> {
+                        println("Shouldn't get here (2 pairs)")
+                        hand
+                    }
+                }
+            }
+
+            hand.type == 6 -> { // 1 pair
+                return when {
+                    jokerCount == 1 || jokerCount == 2 -> {
+                        hand.type = 4
+                        hand
+                    }
+
+                    else -> {
+                        println("Shouldn't get here (1 pair)")
+                        hand
+                    }
+                }
+            }
+            hand.type == 7 -> { // high card
+                return when {
+                    jokerCount == 1 -> {
+                        hand.type = 6
+                        hand
+                    }
+
+                    else -> {
+                        println("Shouldn't get here (high card)")
+                        hand
+                    }
+                }
+            }
+            else -> {
+                println("Shouldn't get here (else)")
+                return hand
+            }
+        }
+    }
+
+    fun sortHandsV2(input: List<String>): List<Hand> {
+        val hands = input.map { parseHandV2(it) }
+        val newHands = mutableListOf<Hand>()
+        for (hand in hands) {
+            hand.type = determineType(hand)
+            newHands.add(jokerReplacement(hand))
+        }
+        return newHands.sortedWith(::compareHands)
     }
 
     fun calculateWinnings(hands: List<Hand>): Int {
@@ -130,14 +244,19 @@ fun main() {
     }
 
     fun part1(input: List<String>): Int {
-        val hands = sortHands(input)
-        hands.forEach(::println)
+        val hands = sortHandsV1(input)
+//        hands.forEach(::println)
         val winnings = calculateWinnings(hands)
         return winnings
     }
 
+
+
     fun part2(input: List<String>): Int {
-        return 0
+        val hands = sortHandsV2(input)
+//        hands.forEach(::println)
+        val winnings = calculateWinnings(hands)
+        return winnings
     }
 
     // test if implementation meets criteria from the description, like:
@@ -147,5 +266,5 @@ fun main() {
 
     val input = readInput("Day07")
     println(part1(input))
-//    println(part2(input))
+    println(part2(input))
 }

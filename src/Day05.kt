@@ -1,10 +1,30 @@
 fun main() {
 
+    data class Set(
+        val beginningNumber: Long,
+        val endingNumber: Long,
+    )
+
     data class Transformation(
         val destination: Long,
         val source: Long,
         val range: Long,
     )
+
+    data class AlmanacEntry(
+        val transforms: List<Transformation>
+    ) {
+        fun findSource(destinationNumber: Long): Long {
+            for (transform in transforms) {
+                val destinationOffset = destinationNumber - transform.destination
+                if (destinationOffset >= 0 && destinationOffset < transform.range) {
+                    return transform.source + destinationOffset
+                }
+            }
+            return destinationNumber
+        }
+    }
+
 
     data class Mapping(
         val seed: Long,
@@ -17,6 +37,12 @@ fun main() {
         val location: Long,
     )
 
+    fun printSets(sets: List<Set>) {
+        for (set in sets) {
+            println("${set.beginningNumber} - ${set.endingNumber}")
+        }
+    }
+
     fun isTransformed(transformation: Transformation, value: Long): Boolean {
         return value in transformation.source..(transformation.source + transformation.range)
     }
@@ -25,31 +51,12 @@ fun main() {
         return input.split(":")[1].trim().split(" ").map { it.toLong() }
     }
 
-    fun getListOfSeedValuesV2(input: String): List<Long> {
-        val seeds = mutableListOf<Long>()
+    fun getListOfSeedValuesV2(input: String): List<Set> {
+        val seeds = mutableListOf<Set>()
         val inputList = input.split(":")[1].trim().split(" ").map { it.toLong() }
-        var index = 0
-        while (index < inputList.size) {
-            val value = inputList[index]
-            val range = inputList[index + 1]
-            for (i in 0 until range) {
-                seeds.add(value + i)
-            }
-            index += 2
-        }
-        return seeds
-    }
 
-    fun getListOfSeedValuesV3(input: List<Long>): List<Long> {
-        val seeds = mutableListOf<Long>()
-        var index = 0
-        while (index < input.size) {
-            val value = input[index]
-            val range = input[index + 1]
-            for (i in 0 until range) {
-                seeds.add(value + i)
-            }
-            index += 2
+        for (i in 0 until inputList.size step 2) {
+            seeds.add(Set(inputList[i], inputList[i] + inputList[i + 1]))
         }
         return seeds
     }
@@ -141,24 +148,62 @@ fun main() {
         return findMinimum(input, seedValues)
     }
 
-//    fun part2(input: List<String>): Long {
-//        val seedValues = getListOfSeedValuesV2(input[0])
-//        println(seedValues)
-//        return findMinimum(input, seedValues)
-//    }
+    fun mapAlmanac(input: List<String>): List<AlmanacEntry> {
+        val almanac = mutableListOf<AlmanacEntry>()
+        almanac.add(AlmanacEntry(getHumidityToLocationTransformations(input)))
+        almanac.add(AlmanacEntry(getTemperatureToHumidityTransformations(input)))
+        almanac.add(AlmanacEntry(getLightToTemperatureTransformations(input)))
+        almanac.add(AlmanacEntry(getWaterToLightTransformations(input)))
+        almanac.add(AlmanacEntry(getFertilizerToWaterTransformations(input)))
+        almanac.add(AlmanacEntry(getSoilToFertilizerTransformations(input)))
+        almanac.add(AlmanacEntry(getSeedToSoilTransformations(input)))
+        return almanac
+    }
+
+    fun findSeedForLocation(location: Long, almanac: List<AlmanacEntry>): Long {
+        val humidity = almanac[0].findSource(location)
+        val temperature = almanac[1].findSource(humidity)
+        val light = almanac[2].findSource(temperature)
+        val water = almanac[3].findSource(light)
+        val fertilizer = almanac[4].findSource(water)
+        val soil = almanac[5].findSource(fertilizer)
+        val seed = almanac[6].findSource(soil)
+        return seed
+    }
+
 
     fun part2(input: List<String>): Long {
-        val seedValues = getListOfSeedValuesV3(mutableListOf(1347397244L, 12212989L))
-//        println(seedValues)
-        return findMinimum(input, seedValues)
+        // work backwards from location to seed - find the lowest seed that produces location
+        val seedValues = getListOfSeedValuesV2(input[0])
+        val almanac = mapAlmanac(input)
+        println("Seed values: $seedValues")
+        var possibleLocation = 0L
+        var foundLocation = false
+        while (!foundLocation) {
+            val possibleSeed = findSeedForLocation(possibleLocation, almanac)
+            for (seed in seedValues) {
+                if (possibleSeed >= seed.beginningNumber &&
+                    possibleSeed <= seed.endingNumber
+                ) {
+                    foundLocation = true
+                    break
+                }
+            }
+            if (!foundLocation) {
+                possibleLocation++
+            }
+        }
+        println("Location: $possibleLocation")
+        return possibleLocation
     }
+
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day05_test")
-    check(part1(testInput) == 35L)
-//    check(part2(testInput) == 46L)
+//    check(part1(testInput) == 35L)
+    check(part2(testInput) == 46L)
 
     val input = readInput("Day05")
-    println(part1(input))
+//    println(part1(input))
     println(part2(input))
 }
